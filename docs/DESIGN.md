@@ -55,6 +55,23 @@ Both are exercised by the same test suite, which is the real proof that the seam
 a small benchmark compares them. The point is partly practical and partly to make the trade-off
 between the two designs measurable rather than hand-waved.
 
+## Who adjusts the volume
+
+A `BookSide` tracks the live volume at each level, but it does not run the matching, so the two
+have to agree on who subtracts what — otherwise the count drifts. The contract:
+
+- A **partial fill** leaves the order resting with a smaller size. `OrderBook` mutates the
+  order's quantity and calls `reduce_volume(price, filled)` for the amount that traded.
+- A **full removal** pops the order off the front. `pop_best_order` itself subtracts the
+  order's remaining quantity — except when the order is a tombstone, which already had its
+  volume removed at cancel time. That exception is the "adjusted once" rule below, enforced in
+  one place (`if not order.is_cancelled`).
+- A **cancel** subtracts the order's remaining quantity via `reduce_volume` and flags the order.
+  The later pop of that tombstone subtracts nothing.
+
+The net effect is the invariant that every unit of volume is counted out exactly once, whether
+it leaves by trading or by cancellation.
+
 ## Operating rules
 
 Market orders. A market order never rests. A market buy repeatedly takes the best ask, popping
