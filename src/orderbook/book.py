@@ -56,6 +56,7 @@ class OrderBook:
 
             if fill_quantity==matched_order.quantity:
                 opposite_side.pop_best_order()
+                self.order_diary.pop(matched_order.order_id, None)
             else:
                 matched_order.quantity-=fill_quantity
                 opposite_side.reduce_volume(matched_order.price, fill_quantity)
@@ -75,8 +76,27 @@ class OrderBook:
             own_side.add_order(new_order)
 
         return trades
-                
-                
+    
+    
+    def cancel_order(self, order_id: int )->bool:
+        
+        if order_id not in self.order_diary:
+            return False
+    
+        order=self.order_diary[order_id]
+        order.is_cancelled=True
+        side=order.side
+        
+       
+        own_side = self.bid_book if side == Side.BUY else self.ask_book
+        assert order.price is not None        
+        own_side.reduce_volume(order.price,order.quantity)
+        
+        del self.order_diary[order_id]
+        
+        return True
+    
+          
                 
                     
         
