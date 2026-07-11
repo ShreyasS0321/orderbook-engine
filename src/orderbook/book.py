@@ -101,3 +101,21 @@ class OrderBook:
 
         del self.order_diary[order_id]
         return True
+
+    def best_bid(self) -> tuple[int, int] | None:
+        levels = self.bid_book.get_top_levels(1)
+        return levels[0] if levels else None
+
+    def best_ask(self) -> tuple[int, int] | None:
+        levels = self.ask_book.get_top_levels(1)
+        return levels[0] if levels else None
+
+    def spread(self) -> int | None:
+        bid = self.bid_book.get_best_price()
+        ask = self.ask_book.get_best_price()
+        if bid is None or ask is None:
+            return None
+        return ask - bid
+
+    def depth(self, n: int) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+        return self.bid_book.get_top_levels(n), self.ask_book.get_top_levels(n)
