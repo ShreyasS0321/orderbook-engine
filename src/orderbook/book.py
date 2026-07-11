@@ -10,6 +10,12 @@ class OrderBook:
         self.counter = 0
         self.trade_id_counter = 0
 
+    def _validate_new_order(self, order_id: int, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError("quantity must be positive")
+        if order_id in self.order_diary:
+            raise ValueError(f"duplicate order id: {order_id}")
+
     def _match(
         self,
         taker_id: int,
@@ -64,6 +70,7 @@ class OrderBook:
     def process_limit_order(
         self, order_id: int, price: int, quantity: int, side: Side
     ) -> list[Trade]:
+        self._validate_new_order(order_id, quantity)
         self.counter += 1
         current_time = self.counter
 
@@ -85,6 +92,7 @@ class OrderBook:
         return trades
 
     def process_market_order(self, order_id: int, quantity: int, side: Side) -> list[Trade]:
+        self._validate_new_order(order_id, quantity)
         self.counter += 1
         trades, _ = self._match(order_id, side, quantity, None, self.counter)
         return trades
