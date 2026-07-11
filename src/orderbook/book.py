@@ -84,6 +84,11 @@ class OrderBook:
 
         return trades
 
+    def process_market_order(self, order_id: int, quantity: int, side: Side) -> list[Trade]:
+        self.counter += 1
+        trades, _ = self._match(order_id, side, quantity, None, self.counter)
+        return trades
+
     def cancel_order(self, order_id: int) -> bool:
         if order_id not in self.order_diary:
             return False
