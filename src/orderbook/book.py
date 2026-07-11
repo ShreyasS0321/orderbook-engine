@@ -110,6 +110,25 @@ class OrderBook:
         del self.order_diary[order_id]
         return True
 
+    def modify_order(self, order_id: int, new_price: int, new_quantity: int) -> list[Trade]:
+        if order_id not in self.order_diary:
+            return []
+        if new_quantity <= 0:
+            raise ValueError("quantity must be positive")
+
+        order = self.order_diary[order_id]
+        assert order.price is not None
+
+        if new_price == order.price and new_quantity <= order.quantity:
+            own_side = self.bid_book if order.side == Side.BUY else self.ask_book
+            own_side.reduce_volume(order.price, order.quantity - new_quantity)
+            order.quantity = new_quantity
+            return []
+
+        side = order.side
+        self.cancel_order(order_id)
+        return self.process_limit_order(order_id, new_price, new_quantity, side)
+
     def best_bid(self) -> tuple[int, int] | None:
         levels = self.bid_book.get_top_levels(1)
         return levels[0] if levels else None
