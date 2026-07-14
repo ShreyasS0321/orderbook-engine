@@ -41,3 +41,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 python_version = "3.12"
 strict = true
 files = ["src"]
+
+[[tool.mypy.overrides]]
+module = "sortedcontainers.*"
+ignore_missing_imports = true

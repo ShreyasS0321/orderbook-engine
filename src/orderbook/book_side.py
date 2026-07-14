@@ -2,6 +2,8 @@ import heapq
 from abc import ABC, abstractmethod
 from collections import deque
 
+from sortedcontainers import SortedDict
+
 from .types import Order, Side
 
 
@@ -123,4 +125,62 @@ class HeapBookSide(BookSide):
 
 
 
+class SortedDictBookSide(BookSide):
+    
+    def __init__(self, side: Side) -> None:
+        self.levels = SortedDict()
+        self.side = side
+        self.volume_tracker: dict[int, int] = {}
+        self._end = -1 if side is Side.BUY else 0
+
+    def add_order(self, order: Order) -> None:
+        assert order.price is not None
+        if order.price not in self.levels:
+            self.levels[order.price] = deque()
+            self.volume_tracker[order.price] = 0
+        self.levels[order.price].append(order)
+        self.volume_tracker[order.price] += order.quantity
+    
+    def peek_best_order(self) -> Order | None:
+        if not self.levels:
+            return None
+        order: Order = self.levels.peekitem(self._end)[1][0]
+        return order
+
+    def pop_best_order(self) -> Order | None:
+        if not self.levels:
+            return None
+        price, dq = self.levels.peekitem(self._end)
+        order: Order = dq.popleft()
+        if not order.is_cancelled:
+            self.volume_tracker[price] -= order.quantity
+        if not dq or self.volume_tracker[price] <= 0:
+            del self.levels[price]
+            del self.volume_tracker[price]
+        return order
+
+    def get_best_price(self) -> int | None:
+        if not self.levels:
+            return None
+        price: int = self.levels.peekitem(self._end)[0]
+        return price
+
+    def reduce_volume(self, price: int, qty: int) -> None:
+        self.volume_tracker[price] -= qty
+        if self.volume_tracker[price] <= 0:
+            del self.levels[price]
+            del self.volume_tracker[price]
+
+    def get_top_levels(self, n: int) -> list[tuple[int, int]]:
+        levels: list[tuple[int, int]] = []
+        prices = reversed(self.levels) if self.side is Side.BUY else iter(self.levels)
+        for price in prices:
+            levels.append((price, self.volume_tracker[price]))
+            if len(levels) == n:
+                break
+        return levels
+
+    def is_empty(self) -> bool:
+        return not self.levels
+    
     
