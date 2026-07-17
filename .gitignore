@@ -23,3 +23,6 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Benchmark output (regenerated per machine)
+benchmarks/results/

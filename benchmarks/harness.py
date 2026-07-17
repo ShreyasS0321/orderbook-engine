@@ -82,6 +82,36 @@ def measure(
     return samples
 
 
+def throughput(
+    op: Callable[[int], object],
+    count: int,
+    warmup: int = 10_000,
+    disable_gc: bool = True,
+) -> float:
+    """Ops per second, timing the whole batch at once.
+
+    Batching amortises the fixed clock overhead to nothing, so this is accurate
+    even where per-call resolution is coarse -- but it yields only a mean, no
+    distribution. Use `measure` for tail percentiles.
+    """
+    perf = time.perf_counter_ns
+    for i in range(warmup):
+        op(i)
+
+    gc_was_enabled = gc.isenabled()
+    if disable_gc:
+        gc.disable()
+    try:
+        start = perf()
+        for i in range(warmup, warmup + count):
+            op(i)
+        elapsed_ns = perf() - start
+    finally:
+        if disable_gc and gc_was_enabled:
+            gc.enable()
+    return count / (elapsed_ns / 1e9)
+
+
 def timer_overhead(count: int = 100_000) -> np.ndarray:
     """Latency of two back-to-back clock reads: the measurement noise floor."""
     perf = time.perf_counter_ns
