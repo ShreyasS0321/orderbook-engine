@@ -1,11 +1,11 @@
-from .book_side import HeapBookSide
+from .book_side import BookSide, HeapBookSide
 from .types import Order, OrderType, Side, Trade
 
 
 class OrderBook:
-    def __init__(self) -> None:
-        self.ask_book: HeapBookSide = HeapBookSide(Side.SELL)
-        self.bid_book: HeapBookSide = HeapBookSide(Side.BUY)
+    def __init__(self, book_side_cls: type[BookSide] = HeapBookSide) -> None:
+        self.ask_book: BookSide = book_side_cls(Side.SELL)
+        self.bid_book: BookSide = book_side_cls(Side.BUY)
         self.order_diary: dict[int, Order] = {}
         self.counter = 0
         self.trade_id_counter = 0

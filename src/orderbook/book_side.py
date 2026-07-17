@@ -9,6 +9,10 @@ from .types import Order, Side
 
 class BookSide(ABC):
     @abstractmethod
+    def __init__(self, side: Side) -> None:
+        ...
+
+    @abstractmethod
     def get_best_price(self)->int | None:
         pass
         
